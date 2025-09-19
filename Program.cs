@@ -4,6 +4,11 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --------------------
+// 1️⃣ Services
+// --------------------
+
+// Controllers + JSON options
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -11,13 +16,15 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.WriteIndented = true;
     });
 
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ✅ Dùng đúng ApplicationDbContext
+// EF Core DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -28,13 +35,34 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.WebHost.ConfigureKestrel(options =>
+// --------------------
+// 2️⃣ Configure Kestrel to use dynamic port from Render
+// --------------------
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
 {
-    options.ListenAnyIP(5216);
-});
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        options.ListenAnyIP(int.Parse(port)); // Lắng nghe port Render cấp
+    });
+}
+else
+{
+    // Local dev fallback
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        options.ListenAnyIP(5216);
+    });
+}
 
+// --------------------
+// 3️⃣ Build app
+// --------------------
 var app = builder.Build();
 
+// --------------------
+// 4️⃣ Middleware
+// --------------------
 app.UseStaticFiles();
 app.UseCors("AllowAll");
 
@@ -46,4 +74,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthorization();
 app.MapControllers();
+
+// --------------------
+// 5️⃣ Run app
+// --------------------
 app.Run();
