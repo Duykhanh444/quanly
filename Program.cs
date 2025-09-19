@@ -8,15 +8,16 @@ var builder = WebApplication.CreateBuilder(args);
 // 1️⃣ Services
 // --------------------
 
-// Controllers + JSON options
+// Add controllers with JSON options
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
+        // Ignore reference cycles to avoid JSON serialization errors
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.WriteIndented = true;
     });
 
-// Swagger
+// Swagger for API documentation
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -24,7 +25,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// CORS
+// Enable CORS (Allow all origins, methods, headers)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -36,29 +37,25 @@ builder.Services.AddCors(options =>
 });
 
 // --------------------
-// 2️⃣ Configure Kestrel to use dynamic port from Render
+// 2️⃣ Configure Kestrel with dynamic port
 // --------------------
-var port = Environment.GetEnvironmentVariable("PORT");
-if (!string.IsNullOrEmpty(port))
+var portEnv = Environment.GetEnvironmentVariable("PORT");
+var port = !string.IsNullOrEmpty(portEnv) ? int.Parse(portEnv) : 5216;
+builder.WebHost.ConfigureKestrel(options =>
 {
-    builder.WebHost.ConfigureKestrel(options =>
-    {
-        options.ListenAnyIP(int.Parse(port)); // Lắng nghe port Render cấp
-    });
-}
-else
-{
-    // Local dev fallback
-    builder.WebHost.ConfigureKestrel(options =>
-    {
-        options.ListenAnyIP(5216);
-    });
-}
+    options.ListenAnyIP(port); // Listen on all IPs
+});
+
+var app = builder.Build();
 
 // --------------------
-// 3️⃣ Build app
+// 3️⃣ Apply migrations on startup
 // --------------------
-var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate(); // Apply migrations automatically
+}
 
 // --------------------
 // 4️⃣ Middleware
@@ -76,6 +73,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 // --------------------
-// 5️⃣ Run app
+// 5️⃣ Run
 // --------------------
-app.Run();
+app.Run($"http://0.0.0.0:{port}");
