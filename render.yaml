@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: hrmapi
+    env: dotnet
+    plan: free
+    buildCommand: "dotnet publish -c Release -o out"
+    startCommand: "dotnet out/HRMApi.dll"
+    envVars:
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
