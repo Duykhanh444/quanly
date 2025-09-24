@@ -338,3 +338,4 @@ E:\HRMApi\obj\Debug\net8.0\refint\HRMApi.dll
 E:\HRMApi\obj\Debug\net8.0\HRMApi.pdb
 E:\HRMApi\obj\Debug\net8.0\HRMApi.genruntimeconfig.cache
 E:\HRMApi\obj\Debug\net8.0\ref\HRMApi.dll
+E:\hrmapi\obj\Debug\net8.0\HRMApi.sourcelink.json

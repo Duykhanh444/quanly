@@ -1,21 +1,21 @@
-using System;
+    using System;
 
-namespace HRMApi.Models
-{
-    public class HoaDonItem
+    namespace HRMApi.Models
     {
-        public int Id { get; set; }
+        public class HoaDonItem
+        {
+            public int Id { get; set; }
 
-        public int HoaDonId { get; set; }   // FK tới bảng HoaDon
+            public int HoaDonId { get; set; }   // FK tới bảng HoaDon
 
-        // tên hàng/sản phẩm
-        public string TenHang { get; set; } = string.Empty;
+            // tên hàng/sản phẩm
+            public string TenHang { get; set; } = string.Empty;
 
-        public int SoLuong { get; set; }    // số lượng mua
+            public int SoLuong { get; set; }    // số lượng mua
 
-        public int GiaTien { get; set; }    // đơn giá từng sản phẩm
+            public int GiaTien { get; set; }    // đơn giá từng sản phẩm
 
-        // Navigation tới hóa đơn
-        public HoaDon? HoaDon { get; set; }
+            // Navigation tới hóa đơn
+            public HoaDon? HoaDon { get; set; }
+        }
     }
-}

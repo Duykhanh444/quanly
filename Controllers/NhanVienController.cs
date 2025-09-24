@@ -53,30 +53,41 @@ namespace HRMApi.Controllers
             [FromForm] decimal luongTheoGio,
             [FromForm] IFormFile? anhDaiDien)
         {
-            var nv = new NhanVien
-            {
-                HoTen = hoTen,
-                SoDienThoai = soDienThoai,
-                ChucVu = chucVu,
-                LuongTheoGio = luongTheoGio,
-                WorkDays = new List<WorkDay>()
-            };
+            if (string.IsNullOrWhiteSpace(hoTen) || string.IsNullOrWhiteSpace(chucVu))
+                return BadRequest("HoTen và ChucVu không được để trống.");
 
-            if (anhDaiDien != null)
+            try
             {
-                var fileName = Guid.NewGuid() + Path.GetExtension(anhDaiDien.FileName);
-                var filePath = Path.Combine(_env.ContentRootPath, "wwwroot/uploads", fileName);
-                Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-                using var fs = new FileStream(filePath, FileMode.Create);
-                await anhDaiDien.CopyToAsync(fs);
-                nv.AnhDaiDien = fileName;
+                var nv = new NhanVien
+                {
+                    HoTen = hoTen,
+                    SoDienThoai = soDienThoai ?? "",
+                    ChucVu = chucVu,
+                    LuongTheoGio = luongTheoGio,
+                    WorkDays = new List<WorkDay>()
+                };
+
+                if (anhDaiDien != null)
+                {
+                    var fileName = Guid.NewGuid() + Path.GetExtension(anhDaiDien.FileName);
+                    var filePath = Path.Combine(_env.ContentRootPath, "wwwroot/uploads", fileName);
+                    Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+                    using var fs = new FileStream(filePath, FileMode.Create);
+                    await anhDaiDien.CopyToAsync(fs);
+                    nv.AnhDaiDien = fileName;
+                }
+
+                _context.NhanViens.Add(nv);
+                await _context.SaveChangesAsync();
+
+                nv = await _context.NhanViens.Include(x => x.WorkDays).FirstAsync(x => x.Id == nv.Id);
+                return Ok(MapToDto(nv));
             }
-
-            _context.NhanViens.Add(nv);
-            await _context.SaveChangesAsync();
-
-            nv = await _context.NhanViens.Include(x => x.WorkDays).FirstAsync(x => x.Id == nv.Id);
-            return Ok(MapToDto(nv));
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Create NhanVien Exception: {ex}");
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
         }
 
         // PUT: api/NhanVien/5
@@ -89,40 +100,56 @@ namespace HRMApi.Controllers
             [FromForm] decimal luongTheoGio,
             [FromForm] IFormFile? anhDaiDien)
         {
-            var nv = await _context.NhanViens.Include(n => n.WorkDays)
-                .FirstOrDefaultAsync(n => n.Id == id);
-            if (nv == null) return NotFound();
-
-            nv.HoTen = hoTen;
-            nv.SoDienThoai = soDienThoai;
-            nv.ChucVu = chucVu;
-            nv.LuongTheoGio = luongTheoGio;
-
-            if (anhDaiDien != null)
+            try
             {
-                var fileName = Guid.NewGuid() + Path.GetExtension(anhDaiDien.FileName);
-                var filePath = Path.Combine(_env.ContentRootPath, "wwwroot/uploads", fileName);
-                Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
-                using var fs = new FileStream(filePath, FileMode.Create);
-                await anhDaiDien.CopyToAsync(fs);
-                nv.AnhDaiDien = fileName;
-            }
+                var nv = await _context.NhanViens.Include(n => n.WorkDays)
+                    .FirstOrDefaultAsync(n => n.Id == id);
+                if (nv == null) return NotFound();
 
-            await _context.SaveChangesAsync();
-            nv = await _context.NhanViens.Include(x => x.WorkDays).FirstAsync(x => x.Id == nv.Id);
-            return Ok(MapToDto(nv));
+                nv.HoTen = hoTen;
+                nv.SoDienThoai = soDienThoai ?? "";
+                nv.ChucVu = chucVu;
+                nv.LuongTheoGio = luongTheoGio;
+
+                if (anhDaiDien != null)
+                {
+                    var fileName = Guid.NewGuid() + Path.GetExtension(anhDaiDien.FileName);
+                    var filePath = Path.Combine(_env.ContentRootPath, "wwwroot/uploads", fileName);
+                    Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+                    using var fs = new FileStream(filePath, FileMode.Create);
+                    await anhDaiDien.CopyToAsync(fs);
+                    nv.AnhDaiDien = fileName;
+                }
+
+                await _context.SaveChangesAsync();
+                nv = await _context.NhanViens.Include(x => x.WorkDays).FirstAsync(x => x.Id == nv.Id);
+                return Ok(MapToDto(nv));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Update NhanVien Exception: {ex}");
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
         }
 
         // DELETE: api/NhanVien/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var nv = await _context.NhanViens.Include(n => n.WorkDays).FirstOrDefaultAsync(n => n.Id == id);
-            if (nv == null) return NotFound();
+            try
+            {
+                var nv = await _context.NhanViens.Include(n => n.WorkDays).FirstOrDefaultAsync(n => n.Id == id);
+                if (nv == null) return NotFound();
 
-            _context.NhanViens.Remove(nv);
-            await _context.SaveChangesAsync();
-            return NoContent();
+                _context.NhanViens.Remove(nv);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Delete NhanVien Exception: {ex}");
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
         }
 
         // ========================= WorkDays =========================
@@ -131,51 +158,75 @@ namespace HRMApi.Controllers
         [HttpPost("{id}/WorkDays")]
         public async Task<IActionResult> AddWorkDay(int id, [FromBody] WorkDayRequestDto dto)
         {
-            var nv = await _context.NhanViens.Include(n => n.WorkDays).FirstOrDefaultAsync(n => n.Id == id);
-            if (nv == null) return NotFound();
-
-            var wd = new WorkDay
+            try
             {
-                Ngay = dto.Ngay,
-                SoGio = dto.SoGio,
-                NhanVienId = nv.Id
-            };
+                var nv = await _context.NhanViens.Include(n => n.WorkDays).FirstOrDefaultAsync(n => n.Id == id);
+                if (nv == null) return NotFound();
 
-            _context.WorkDays.Add(wd);
-            await _context.SaveChangesAsync();
+                var wd = new WorkDay
+                {
+                    Ngay = dto.Ngay,
+                    SoGio = dto.SoGio,
+                    NhanVienId = nv.Id
+                };
 
-            nv = await _context.NhanViens.Include(n => n.WorkDays).FirstAsync(n => n.Id == id);
-            return Ok(MapToDto(nv));
+                _context.WorkDays.Add(wd);
+                await _context.SaveChangesAsync();
+
+                nv = await _context.NhanViens.Include(n => n.WorkDays).FirstAsync(n => n.Id == id);
+                return Ok(MapToDto(nv));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"AddWorkDay Exception: {ex}");
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
         }
 
         // PUT: api/NhanVien/5/WorkDays/10
         [HttpPut("{id}/WorkDays/{workDayId}")]
         public async Task<IActionResult> UpdateWorkDay(int id, int workDayId, [FromBody] WorkDayRequestDto dto)
         {
-            var wd = await _context.WorkDays.FirstOrDefaultAsync(w => w.Id == workDayId && w.NhanVienId == id);
-            if (wd == null) return NotFound();
+            try
+            {
+                var wd = await _context.WorkDays.FirstOrDefaultAsync(w => w.Id == workDayId && w.NhanVienId == id);
+                if (wd == null) return NotFound();
 
-            wd.Ngay = dto.Ngay;
-            wd.SoGio = dto.SoGio;
+                wd.Ngay = dto.Ngay;
+                wd.SoGio = dto.SoGio;
 
-            await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
 
-            var nv = await _context.NhanViens.Include(n => n.WorkDays).FirstAsync(n => n.Id == id);
-            return Ok(MapToDto(nv));
+                var nv = await _context.NhanViens.Include(n => n.WorkDays).FirstAsync(n => n.Id == id);
+                return Ok(MapToDto(nv));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"UpdateWorkDay Exception: {ex}");
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
         }
 
         // DELETE: api/NhanVien/5/WorkDays/10
         [HttpDelete("{id}/WorkDays/{workDayId}")]
         public async Task<IActionResult> DeleteWorkDay(int id, int workDayId)
         {
-            var wd = await _context.WorkDays.FirstOrDefaultAsync(w => w.Id == workDayId && w.NhanVienId == id);
-            if (wd == null) return NotFound();
+            try
+            {
+                var wd = await _context.WorkDays.FirstOrDefaultAsync(w => w.Id == workDayId && w.NhanVienId == id);
+                if (wd == null) return NotFound();
 
-            _context.WorkDays.Remove(wd);
-            await _context.SaveChangesAsync();
+                _context.WorkDays.Remove(wd);
+                await _context.SaveChangesAsync();
 
-            var nv = await _context.NhanViens.Include(n => n.WorkDays).FirstAsync(n => n.Id == id);
-            return Ok(MapToDto(nv));
+                var nv = await _context.NhanViens.Include(n => n.WorkDays).FirstAsync(n => n.Id == id);
+                return Ok(MapToDto(nv));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"DeleteWorkDay Exception: {ex}");
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
         }
 
         // ========================= Mapping =========================

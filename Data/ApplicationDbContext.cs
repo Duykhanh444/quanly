@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using HRMApi.Models;
- 
 
 namespace HRMApi.Data
 {
@@ -17,12 +16,11 @@ namespace HRMApi.Data
         public DbSet<WorkDay> WorkDays { get; set; }
         public DbSet<TongHopDanhSach> TongHopDanhSaches { get; set; }
 
-
         public DbSet<HoaDon> HoaDons { get; set; }
         public DbSet<HoaDonItem> HoaDonItems { get; set; }
 
         // =====================
-        // 🔹 Cấu hình quan hệ
+        // 🔹 Cấu hình quan hệ + decimal
         // =====================
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -41,6 +39,15 @@ namespace HRMApi.Data
                 .WithMany(h => h.Items)
                 .HasForeignKey(i => i.HoaDonId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // 3️⃣ Fix decimal warnings
+            modelBuilder.Entity<NhanVien>()
+                .Property(nv => nv.LuongTheoGio)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<TongHopDanhSach>()
+                .Property(th => th.TongTien)
+                .HasColumnType("decimal(18,2)");
         }
     }
 }

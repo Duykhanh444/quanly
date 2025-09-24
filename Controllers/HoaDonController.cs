@@ -26,30 +26,48 @@ namespace HRMApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<HoaDon>>> GetAll()
         {
-            return await _context.HoaDons
-                .Include(h => h.Items)
-                .ToListAsync();
+            try
+            {
+                return Ok(await _context.HoaDons.Include(h => h.Items).ToListAsync());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetAll HoaDon Exception: {ex}");
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<HoaDon>> GetById(int id)
         {
-            var hd = await _context.HoaDons
-                .Include(h => h.Items)
-                .FirstOrDefaultAsync(h => h.Id == id);
-
-            if (hd == null) return NotFound();
-
-            return hd;
+            try
+            {
+                var hd = await _context.HoaDons.Include(h => h.Items).FirstOrDefaultAsync(h => h.Id == id);
+                if (hd == null) return NotFound();
+                return Ok(hd);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetById HoaDon Exception: {ex}");
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
         }
 
         [HttpPost]
         public async Task<ActionResult<HoaDon>> Create(HoaDon hd)
         {
-            hd.TongTien = TinhTongTien(hd);
-            _context.HoaDons.Add(hd);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new { id = hd.Id }, hd);
+            try
+            {
+                hd.TongTien = TinhTongTien(hd);
+                _context.HoaDons.Add(hd);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetById), new { id = hd.Id }, hd);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Create HoaDon Exception: {ex}");
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
         }
 
         [HttpPut("{id}")]
@@ -57,105 +75,52 @@ namespace HRMApi.Controllers
         {
             if (id != hd.Id) return BadRequest();
 
-            hd.TongTien = TinhTongTien(hd);
-            _context.Entry(hd).State = EntityState.Modified;
-
-            foreach (var item in hd.Items)
-            {
-                if (item.Id == 0)
-                    _context.Entry(item).State = EntityState.Added;
-                else
-                    _context.Entry(item).State = EntityState.Modified;
-            }
-
             try
             {
+                hd.TongTien = TinhTongTien(hd);
+                _context.Entry(hd).State = EntityState.Modified;
+
+                foreach (var item in hd.Items)
+                {
+                    if (item.Id == 0)
+                        _context.Entry(item).State = EntityState.Added;
+                    else
+                        _context.Entry(item).State = EntityState.Modified;
+                }
+
                 await _context.SaveChangesAsync();
+                return NoContent();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.HoaDons.Any(e => e.Id == id))
-                    return NotFound();
-                else throw;
+                if (!_context.HoaDons.Any(e => e.Id == id)) return NotFound();
+                throw;
             }
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Update HoaDon Exception: {ex}");
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var hd = await _context.HoaDons
-                .Include(h => h.Items)
-                .FirstOrDefaultAsync(h => h.Id == id);
-
-            if (hd == null) return NotFound();
-
-            _context.HoaDonItems.RemoveRange(hd.Items);
-            _context.HoaDons.Remove(hd);
-            await _context.SaveChangesAsync();
-            return NoContent();
-        }
-
-        // --------------------- ITEM ---------------------
-        [HttpPost("{id}/Items")]
-        public async Task<ActionResult<HoaDonItem>> AddItem(int id, HoaDonItem item)
-        {
-            var hd = await _context.HoaDons
-                .Include(h => h.Items)
-                .FirstOrDefaultAsync(h => h.Id == id);
-
-            if (hd == null) return NotFound();
-
-            item.HoaDonId = hd.Id;
-            hd.Items.Add(item);
-            hd.TongTien = TinhTongTien(hd);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetById), new { id = hd.Id }, item);
-        }
-
-        [HttpDelete("Items/{itemId}")]
-        public async Task<IActionResult> DeleteItem(int itemId)
-        {
-            var item = await _context.HoaDonItems.FindAsync(itemId);
-            if (item == null) return NotFound();
-
-            var hd = await _context.HoaDons.Include(h => h.Items)
-                .FirstOrDefaultAsync(h => h.Id == item.HoaDonId);
-
-            _context.HoaDonItems.Remove(item);
-            if (hd != null)
+            try
             {
-                hd.TongTien = TinhTongTien(hd);
+                var hd = await _context.HoaDons.Include(h => h.Items).FirstOrDefaultAsync(h => h.Id == id);
+                if (hd == null) return NotFound();
+
+                _context.HoaDonItems.RemoveRange(hd.Items);
+                _context.HoaDons.Remove(hd);
+                await _context.SaveChangesAsync();
+                return NoContent();
             }
-
-            await _context.SaveChangesAsync();
-            return NoContent();
-        }
-
-        [HttpPut("Items/{itemId}")]
-        public async Task<IActionResult> UpdateItem(int itemId, HoaDonItem item)
-        {
-            if (itemId != item.Id) return BadRequest();
-
-            var existingItem = await _context.HoaDonItems
-                .Include(i => i.HoaDon)
-                .FirstOrDefaultAsync(i => i.Id == itemId);
-
-            if (existingItem == null) return NotFound();
-
-            existingItem.TenHang = item.TenHang;
-            existingItem.SoLuong = item.SoLuong;
-            existingItem.GiaTien = item.GiaTien;
-
-            if (existingItem.HoaDon != null)
+            catch (Exception ex)
             {
-                existingItem.HoaDon.TongTien = TinhTongTien(existingItem.HoaDon);
+                Console.WriteLine($"Delete HoaDon Exception: {ex}");
+                return StatusCode(500, $"Lỗi server: {ex.Message}");
             }
-
-            await _context.SaveChangesAsync();
-            return NoContent();
         }
 
         // --------------------- XÓA TẤT CẢ HÓA ĐƠN ĐÃ THANH TOÁN ---------------------
@@ -169,8 +134,7 @@ namespace HRMApi.Controllers
                     .Where(hd => hd.TrangThai == "Đã thanh toán")
                     .ToListAsync();
 
-                if (!hoaDonsDaThanhToan.Any())
-                    return NoContent();
+                if (!hoaDonsDaThanhToan.Any()) return NoContent();
 
                 foreach (var hd in hoaDonsDaThanhToan)
                 {
@@ -179,11 +143,11 @@ namespace HRMApi.Controllers
 
                 _context.HoaDons.RemoveRange(hoaDonsDaThanhToan);
                 await _context.SaveChangesAsync();
-
                 return NoContent();
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"XoaTatCaDaThanhToan Exception: {ex}");
                 return StatusCode(500, $"Lỗi server: {ex.Message}");
             }
         }

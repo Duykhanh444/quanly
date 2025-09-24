@@ -8,24 +8,24 @@ var builder = WebApplication.CreateBuilder(args);
 // 1️⃣ Services
 // --------------------
 
-// Add controllers with JSON options
+// Controllers + JSON options
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // Ignore reference cycles to avoid JSON serialization errors
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.WriteIndented = true;
     });
 
-// Swagger for API documentation
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// EF Core DbContext
+// EF Core DbContext (PostgreSQL)
+// ⚡ Yêu cầu: cài NuGet package Npgsql.EntityFrameworkCore.PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Enable CORS (Allow all origins, methods, headers)
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -37,24 +37,39 @@ builder.Services.AddCors(options =>
 });
 
 // --------------------
-// 2️⃣ Configure Kestrel with dynamic port
+// 2️⃣ Configure Kestrel để nhận tất cả IP + PORT Render
 // --------------------
-var portEnv = Environment.GetEnvironmentVariable("PORT");
-var port = !string.IsNullOrEmpty(portEnv) ? int.Parse(portEnv) : 5216;
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(port); // Listen on all IPs
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+    options.ListenAnyIP(int.Parse(port));
 });
 
 var app = builder.Build();
 
 // --------------------
-// 3️⃣ Apply migrations on startup
+// 3️⃣ Apply migrations + check DB connection
 // --------------------
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate(); // Apply migrations automatically
+
+    try
+    {
+        if (!db.Database.CanConnect())
+        {
+            Console.WriteLine("❌ Cannot connect to database. Check your connection string!");
+        }
+        else
+        {
+            Console.WriteLine("✅ Connected to database successfully!");
+            db.Database.Migrate(); // Apply migrations tự động
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Database migration failed: {ex.Message}");
+    }
 }
 
 // --------------------
@@ -75,4 +90,4 @@ app.MapControllers();
 // --------------------
 // 5️⃣ Run
 // --------------------
-app.Run($"http://0.0.0.0:{port}");
+app.Run();
