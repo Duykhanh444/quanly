@@ -16,13 +16,19 @@ namespace HRMApi.Controllers
             _context = context;
         }
 
-        // GET: api/KhoHang
+        // 🔹 Lấy tất cả kho hàng của user đăng nhập
         [HttpGet]
         public async Task<ActionResult<IEnumerable<KhoHang>>> GetAll()
         {
             try
             {
-                return Ok(await _context.KhoHang.ToListAsync());
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                var list = await _context.KhoHang
+                    .Where(k => k.UserId == userId)
+                    .ToListAsync();
+
+                return Ok(list);
             }
             catch (Exception ex)
             {
@@ -31,13 +37,15 @@ namespace HRMApi.Controllers
             }
         }
 
-        // GET: api/KhoHang/5
+        // 🔹 Lấy 1 kho theo Id của user
         [HttpGet("{id}")]
         public async Task<ActionResult<KhoHang>> GetById(int id)
         {
             try
             {
-                var kho = await _context.KhoHang.FindAsync(id);
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var kho = await _context.KhoHang.FirstOrDefaultAsync(k => k.Id == id && k.UserId == userId);
+
                 if (kho == null) return NotFound();
                 return Ok(kho);
             }
@@ -48,14 +56,18 @@ namespace HRMApi.Controllers
             }
         }
 
-        // POST: api/KhoHang
+        // 🔹 Tạo kho mới cho user hiện tại
         [HttpPost]
         public async Task<ActionResult<KhoHang>> Create(KhoHang kho)
         {
             try
             {
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                kho.UserId = userId;
+
                 _context.KhoHang.Add(kho);
                 await _context.SaveChangesAsync();
+
                 return CreatedAtAction(nameof(GetById), new { id = kho.Id }, kho);
             }
             catch (Exception ex)
@@ -65,7 +77,7 @@ namespace HRMApi.Controllers
             }
         }
 
-        // PUT: api/KhoHang/5
+        // 🔹 Cập nhật kho
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, KhoHang kho)
         {
@@ -73,8 +85,17 @@ namespace HRMApi.Controllers
 
             try
             {
-                _context.Entry(kho).State = EntityState.Modified;
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var existing = await _context.KhoHang.FirstOrDefaultAsync(k => k.Id == id && k.UserId == userId);
+                if (existing == null) return NotFound();
+
+                // Gán lại UserId cho chắc
+                kho.UserId = userId;
+
+                // ✅ Cập nhật tất cả field (bao gồm GiaTri)
+                _context.Entry(existing).CurrentValues.SetValues(kho);
                 await _context.SaveChangesAsync();
+
                 return NoContent();
             }
             catch (DbUpdateConcurrencyException)
@@ -89,13 +110,14 @@ namespace HRMApi.Controllers
             }
         }
 
-        // DELETE: api/KhoHang/5
+        // 🔹 Xóa kho
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                var kho = await _context.KhoHang.FindAsync(id);
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var kho = await _context.KhoHang.FirstOrDefaultAsync(k => k.Id == id && k.UserId == userId);
                 if (kho == null) return NotFound();
 
                 _context.KhoHang.Remove(kho);
@@ -109,13 +131,14 @@ namespace HRMApi.Controllers
             }
         }
 
-        // PUT: api/KhoHang/Xuat/5
+        // 🔹 Xuất kho (chỉ user của kho đó mới được xuất)
         [HttpPut("Xuat/{id}")]
         public async Task<IActionResult> XuatKho(int id)
         {
             try
             {
-                var kho = await _context.KhoHang.FindAsync(id);
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var kho = await _context.KhoHang.FirstOrDefaultAsync(k => k.Id == id && k.UserId == userId);
                 if (kho == null) return NotFound();
 
                 if (kho.TrangThai == "Đã xuất")

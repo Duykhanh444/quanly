@@ -1,52 +1,73 @@
-using Microsoft.EntityFrameworkCore;
 using HRMApi.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace HRMApi.Data
 {
     public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options) { }
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
-        // =====================
-        // 🔹 Các DbSet (bảng)
-        // =====================
+        public DbSet<User> Users { get; set; }
         public DbSet<NhanVien> NhanViens { get; set; }
-        public DbSet<KhoHang> KhoHang { get; set; }
-        public DbSet<WorkDay> WorkDays { get; set; }
-        public DbSet<TongHopDanhSach> TongHopDanhSaches { get; set; }
-
         public DbSet<HoaDon> HoaDons { get; set; }
         public DbSet<HoaDonItem> HoaDonItems { get; set; }
+        public DbSet<KhoHang> KhoHang { get; set; }
+        public DbSet<DoanhThu> DoanhThus { get; set; }
+        public DbSet<WorkDay> WorkDays { get; set; }
 
-        // =====================
-        // 🔹 Cấu hình quan hệ + decimal
-        // =====================
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // 1️⃣ Quan hệ 1-nhiều: NhanVien ↔ WorkDay
+            // User ↔ NhanVien
+            modelBuilder.Entity<NhanVien>()
+                .HasOne<User>()
+                .WithMany(u => u.NhanViens)
+                .HasForeignKey(nv => nv.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // User ↔ HoaDon
+            modelBuilder.Entity<HoaDon>()
+                .HasOne<User>()
+                .WithMany(u => u.HoaDons)
+                .HasForeignKey(hd => hd.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // User ↔ KhoHang
+            modelBuilder.Entity<KhoHang>()
+                .HasOne<User>()
+                .WithMany(u => u.KhoHang)
+                .HasForeignKey(kh => kh.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // User ↔ DoanhThu
+            modelBuilder.Entity<DoanhThu>()
+                .HasOne<User>()
+                .WithMany(u => u.DoanhThus)
+                .HasForeignKey(dt => dt.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // NhanVien ↔ WorkDay
             modelBuilder.Entity<WorkDay>()
                 .HasOne(w => w.NhanVien)
-                .WithMany(n => n.WorkDays)
+                .WithMany(nv => nv.WorkDays)
                 .HasForeignKey(w => w.NhanVienId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // 2️⃣ Quan hệ 1-nhiều: HoaDon ↔ HoaDonItem
+            // HoaDon ↔ HoaDonItem
             modelBuilder.Entity<HoaDonItem>()
                 .HasOne(i => i.HoaDon)
                 .WithMany(h => h.Items)
                 .HasForeignKey(i => i.HoaDonId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // 3️⃣ Fix decimal warnings
+            // Fix decimal warnings
             modelBuilder.Entity<NhanVien>()
                 .Property(nv => nv.LuongTheoGio)
                 .HasColumnType("decimal(18,2)");
 
-            modelBuilder.Entity<TongHopDanhSach>()
-                .Property(th => th.TongTien)
+            modelBuilder.Entity<DoanhThu>()
+                .Property(dt => dt.TongTien)
                 .HasColumnType("decimal(18,2)");
         }
     }

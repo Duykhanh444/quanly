@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "zViLPHss3gla8FyqfjIrxRwnegvb8G8qIIsX1mUBdEo=",
+  "Hash": "W+HUu39ggU+Scub03DuBZHbtGVCJwAQTXKH8vey1Dl4=",
   "Source": "HRMApi",
   "BasePath": "_content/HRMApi",
   "Mode": "Default",
@@ -321,6 +321,25 @@
       "OriginalItemSpec": "wwwroot\\uploads\\33ba7530-2a6c-4bc9-bad5-69ca6d894728.jpg"
     },
     {
+      "Identity": "E:\\HRMApi\\wwwroot\\uploads\\3e6e098c-8132-45a7-8d25-2c4aa9b05328.jpg",
+      "SourceId": "HRMApi",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\HRMApi\\wwwroot\\",
+      "BasePath": "_content/HRMApi",
+      "RelativePath": "uploads/3e6e098c-8132-45a7-8d25-2c4aa9b05328.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\3e6e098c-8132-45a7-8d25-2c4aa9b05328.jpg"
+    },
+    {
       "Identity": "E:\\HRMApi\\wwwroot\\uploads\\3ef4455e-434e-47be-b8ee-fc8b62bbd034.jpg",
       "SourceId": "HRMApi",
       "SourceType": "Discovered",
@@ -549,6 +568,25 @@
       "OriginalItemSpec": "wwwroot\\uploads\\7f9033f5-bb99-4cac-a3d0-37b92018ae16.jpg"
     },
     {
+      "Identity": "E:\\HRMApi\\wwwroot\\uploads\\801b45e4-dec8-4d34-a14e-3c6422d79162.jpg",
+      "SourceId": "HRMApi",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\HRMApi\\wwwroot\\",
+      "BasePath": "_content/HRMApi",
+      "RelativePath": "uploads/801b45e4-dec8-4d34-a14e-3c6422d79162.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\801b45e4-dec8-4d34-a14e-3c6422d79162.jpg"
+    },
+    {
       "Identity": "E:\\HRMApi\\wwwroot\\uploads\\82f3f0c8-c004-4b74-a38f-551bff2b79d3.jpg",
       "SourceId": "HRMApi",
       "SourceType": "Discovered",
@@ -682,6 +720,25 @@
       "OriginalItemSpec": "wwwroot\\uploads\\a59a7e28-5044-4704-a380-8d04ada599d1.jpg"
     },
     {
+      "Identity": "E:\\HRMApi\\wwwroot\\uploads\\a5c042a6-6e36-4ef7-84a6-3152ee33a47a.jpg",
+      "SourceId": "HRMApi",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\HRMApi\\wwwroot\\",
+      "BasePath": "_content/HRMApi",
+      "RelativePath": "uploads/a5c042a6-6e36-4ef7-84a6-3152ee33a47a.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\a5c042a6-6e36-4ef7-84a6-3152ee33a47a.jpg"
+    },
+    {
       "Identity": "E:\\HRMApi\\wwwroot\\uploads\\b1f668b3-a7b6-4900-aa34-0b95af56c306.jpg",
       "SourceId": "HRMApi",
       "SourceType": "Discovered",
@@ -775,6 +832,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\uploads\\ddc0edd3-1838-4392-a807-92a2cd99dbf3.jpg"
+    },
+    {
+      "Identity": "E:\\HRMApi\\wwwroot\\uploads\\e04bb615-0be2-4928-bbf8-bdcffec99cba.jpg",
+      "SourceId": "HRMApi",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\HRMApi\\wwwroot\\",
+      "BasePath": "_content/HRMApi",
+      "RelativePath": "uploads/e04bb615-0be2-4928-bbf8-bdcffec99cba.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\e04bb615-0be2-4928-bbf8-bdcffec99cba.jpg"
     },
     {
       "Identity": "E:\\HRMApi\\wwwroot\\uploads\\e44f2320-fdce-4d49-a55c-6af312b5a8e8.jpg",

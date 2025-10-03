@@ -1,21 +1,32 @@
-    using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-    namespace HRMApi.Models
+namespace HRMApi.Models
+{
+    [Table("HoaDonItems")]
+    public class HoaDonItem
     {
-        public class HoaDonItem
-        {
-            public int Id { get; set; }
+        [Key]
+        public int Id { get; set; }
 
-            public int HoaDonId { get; set; }   // FK tới bảng HoaDon
+        // 🔹 Foreign key tới bảng HoaDon
+        [Required]
+        public int HoaDonId { get; set; }
 
-            // tên hàng/sản phẩm
-            public string TenHang { get; set; } = string.Empty;
+        // Tên hàng/sản phẩm
+        [Required]
+        public string TenHang { get; set; } = string.Empty;
 
-            public int SoLuong { get; set; }    // số lượng mua
+        // Số lượng mua
+        [Required]
+        public int SoLuong { get; set; }
 
-            public int GiaTien { get; set; }    // đơn giá từng sản phẩm
+        // Đơn giá từng sản phẩm
+        [Required]
+        public int GiaTien { get; set; }
 
-            // Navigation tới hóa đơn
-            public HoaDon? HoaDon { get; set; }
-        }
+        // Navigation tới hóa đơn
+        [ForeignKey("HoaDonId")]
+        public HoaDon? HoaDon { get; set; }
     }
+}

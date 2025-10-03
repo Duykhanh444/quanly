@@ -12,18 +12,48 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HRMApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250919094042_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251003051044_InitDatabase")]
+    partial class InitDatabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.7")
+                .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("HRMApi.Models.DoanhThu", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Ngay")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("TongTien")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserId1")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId1");
+
+                    b.ToTable("DoanhThus");
+                });
 
             modelBuilder.Entity("HRMApi.Models.HoaDon", b =>
                 {
@@ -43,6 +73,9 @@ namespace HRMApi.Migrations
                     b.Property<DateTime>("NgayLap")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("PhuongThuc")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("TongTien")
                         .HasColumnType("int");
 
@@ -50,7 +83,13 @@ namespace HRMApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("HoaDons");
                 });
@@ -94,6 +133,9 @@ namespace HRMApi.Migrations
                     b.Property<string>("GhiChu")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal>("GiaTri")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<DateTime>("NgayNhap")
                         .HasColumnType("datetime2");
 
@@ -108,7 +150,13 @@ namespace HRMApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("KhoHang");
                 });
@@ -125,6 +173,10 @@ namespace HRMApi.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ChucVu")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -145,44 +197,48 @@ namespace HRMApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("NhanViens");
                 });
 
-            modelBuilder.Entity("HRMApi.Models.TongHopDanhSach", b =>
+            modelBuilder.Entity("HRMApi.Models.User", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ChucVu")
-                        .IsRequired()
+                    b.Property<string>("AvatarUrl")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Loai")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("NgayTao")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Ten")
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("TongTien")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("TrangThai")
+                    b.Property<string>("UserName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("TongHopDanhSaches");
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("HRMApi.Models.WorkDay", b =>
@@ -209,6 +265,30 @@ namespace HRMApi.Migrations
                     b.ToTable("WorkDays");
                 });
 
+            modelBuilder.Entity("HRMApi.Models.DoanhThu", b =>
+                {
+                    b.HasOne("HRMApi.Models.User", null)
+                        .WithMany("DoanhThus")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRMApi.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId1");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("HRMApi.Models.HoaDon", b =>
+                {
+                    b.HasOne("HRMApi.Models.User", null)
+                        .WithMany("HoaDons")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("HRMApi.Models.HoaDonItem", b =>
                 {
                     b.HasOne("HRMApi.Models.HoaDon", "HoaDon")
@@ -218,6 +298,24 @@ namespace HRMApi.Migrations
                         .IsRequired();
 
                     b.Navigation("HoaDon");
+                });
+
+            modelBuilder.Entity("HRMApi.Models.KhoHang", b =>
+                {
+                    b.HasOne("HRMApi.Models.User", null)
+                        .WithMany("KhoHang")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("HRMApi.Models.NhanVien", b =>
+                {
+                    b.HasOne("HRMApi.Models.User", null)
+                        .WithMany("NhanViens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("HRMApi.Models.WorkDay", b =>
@@ -239,6 +337,17 @@ namespace HRMApi.Migrations
             modelBuilder.Entity("HRMApi.Models.NhanVien", b =>
                 {
                     b.Navigation("WorkDays");
+                });
+
+            modelBuilder.Entity("HRMApi.Models.User", b =>
+                {
+                    b.Navigation("DoanhThus");
+
+                    b.Navigation("HoaDons");
+
+                    b.Navigation("KhoHang");
+
+                    b.Navigation("NhanViens");
                 });
 #pragma warning restore 612, 618
         }

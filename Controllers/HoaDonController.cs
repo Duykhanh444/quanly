@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HRMApi.Data;
@@ -16,140 +17,119 @@ namespace HRMApi.Controllers
             _context = context;
         }
 
-        // --------------------- HÀM TIỆN ÍCH ---------------------
         private int TinhTongTien(HoaDon hd)
         {
             return hd.Items.Sum(i => i.SoLuong * i.GiaTien);
         }
 
-        // --------------------- HÓA ĐƠN ---------------------
+        // 🔹 Lấy tất cả hóa đơn của user đăng nhập
         [HttpGet]
         public async Task<ActionResult<IEnumerable<HoaDon>>> GetAll()
         {
-            try
-            {
-                return Ok(await _context.HoaDons.Include(h => h.Items).ToListAsync());
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"GetAll HoaDon Exception: {ex}");
-                return StatusCode(500, $"Lỗi server: {ex.Message}");
-            }
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var list = await _context.HoaDons
+                .Include(h => h.Items)
+                .Where(h => h.UserId == userId)
+                .ToListAsync();
+
+            return Ok(list);
         }
 
+        // 🔹 Lấy 1 hóa đơn theo Id
         [HttpGet("{id}")]
         public async Task<ActionResult<HoaDon>> GetById(int id)
         {
-            try
-            {
-                var hd = await _context.HoaDons.Include(h => h.Items).FirstOrDefaultAsync(h => h.Id == id);
-                if (hd == null) return NotFound();
-                return Ok(hd);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"GetById HoaDon Exception: {ex}");
-                return StatusCode(500, $"Lỗi server: {ex.Message}");
-            }
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var hd = await _context.HoaDons
+                .Include(h => h.Items)
+                .FirstOrDefaultAsync(h => h.Id == id && h.UserId == userId);
+
+            if (hd == null) return NotFound();
+            return Ok(hd);
         }
 
+        // 🔹 Thêm hóa đơn mới
         [HttpPost]
         public async Task<ActionResult<HoaDon>> Create(HoaDon hd)
         {
-            try
-            {
-                hd.TongTien = TinhTongTien(hd);
-                _context.HoaDons.Add(hd);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = hd.Id }, hd);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Create HoaDon Exception: {ex}");
-                return StatusCode(500, $"Lỗi server: {ex.Message}");
-            }
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            hd.UserId = userId;
+            hd.TongTien = TinhTongTien(hd);
+
+            // ✅ Lưu phương thức thanh toán
+            hd.PhuongThuc = hd.PhuongThuc ?? "Tiền mặt";
+
+            _context.HoaDons.Add(hd);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetById), new { id = hd.Id }, hd);
         }
 
+        // 🔹 Cập nhật hóa đơn
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, HoaDon hd)
         {
             if (id != hd.Id) return BadRequest();
 
-            try
-            {
-                hd.TongTien = TinhTongTien(hd);
-                _context.Entry(hd).State = EntityState.Modified;
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var existing = await _context.HoaDons
+                .Include(h => h.Items)
+                .FirstOrDefaultAsync(h => h.Id == id && h.UserId == userId);
 
-                foreach (var item in hd.Items)
+            if (existing == null) return NotFound();
+
+            // ✅ Cập nhật field chính
+            existing.MaHoaDon = hd.MaHoaDon;
+            existing.LoaiHoaDon = hd.LoaiHoaDon;
+            existing.NgayLap = hd.NgayLap;
+            existing.TrangThai = hd.TrangThai;
+            existing.PhuongThuc = hd.PhuongThuc; // <== thêm vào
+            existing.TongTien = TinhTongTien(hd);
+
+            // ✅ Cập nhật Items
+            var idsMoi = hd.Items.Select(i => i.Id).ToList();
+            var itemsToDelete = existing.Items.Where(i => !idsMoi.Contains(i.Id)).ToList();
+            _context.HoaDonItems.RemoveRange(itemsToDelete);
+
+            foreach (var item in hd.Items)
+            {
+                var existingItem = existing.Items.FirstOrDefault(i => i.Id == item.Id);
+                if (existingItem != null)
                 {
-                    if (item.Id == 0)
-                        _context.Entry(item).State = EntityState.Added;
-                    else
-                        _context.Entry(item).State = EntityState.Modified;
+                    existingItem.TenHang = item.TenHang;
+                    existingItem.SoLuong = item.SoLuong;
+                    existingItem.GiaTien = item.GiaTien;
                 }
+                else
+                {
+                    existing.Items.Add(new HoaDonItem
+                    {
+                        TenHang = item.TenHang,
+                        SoLuong = item.SoLuong,
+                        GiaTien = item.GiaTien
+                    });
+                }
+            }
 
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.HoaDons.Any(e => e.Id == id)) return NotFound();
-                throw;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Update HoaDon Exception: {ex}");
-                return StatusCode(500, $"Lỗi server: {ex.Message}");
-            }
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
 
+        // 🔹 Xóa hóa đơn
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                var hd = await _context.HoaDons.Include(h => h.Items).FirstOrDefaultAsync(h => h.Id == id);
-                if (hd == null) return NotFound();
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var hd = await _context.HoaDons.Include(h => h.Items)
+                .FirstOrDefaultAsync(h => h.Id == id && h.UserId == userId);
 
-                _context.HoaDonItems.RemoveRange(hd.Items);
-                _context.HoaDons.Remove(hd);
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Delete HoaDon Exception: {ex}");
-                return StatusCode(500, $"Lỗi server: {ex.Message}");
-            }
-        }
+            if (hd == null) return NotFound();
 
-        // --------------------- XÓA TẤT CẢ HÓA ĐƠN ĐÃ THANH TOÁN ---------------------
-        [HttpDelete("xoa-tat-ca-da-thanh-toan")]
-        public async Task<IActionResult> XoaTatCaDaThanhToan()
-        {
-            try
-            {
-                var hoaDonsDaThanhToan = await _context.HoaDons
-                    .Include(h => h.Items)
-                    .Where(hd => hd.TrangThai == "Đã thanh toán")
-                    .ToListAsync();
+            _context.HoaDonItems.RemoveRange(hd.Items);
+            _context.HoaDons.Remove(hd);
+            await _context.SaveChangesAsync();
 
-                if (!hoaDonsDaThanhToan.Any()) return NoContent();
-
-                foreach (var hd in hoaDonsDaThanhToan)
-                {
-                    _context.HoaDonItems.RemoveRange(hd.Items);
-                }
-
-                _context.HoaDons.RemoveRange(hoaDonsDaThanhToan);
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"XoaTatCaDaThanhToan Exception: {ex}");
-                return StatusCode(500, $"Lỗi server: {ex.Message}");
-            }
+            return NoContent();
         }
     }
 }

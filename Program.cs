@@ -1,14 +1,14 @@
 using HRMApi.Data;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --------------------
-// 1️⃣ Services
-// --------------------
-
-// Controllers + JSON options
+// -------------------- Services --------------------
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -16,14 +16,17 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.WriteIndented = true;
     });
 
-// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// EF Core DbContext (PostgreSQL)
-// ⚡ Yêu cầu: cài NuGet package Npgsql.EntityFrameworkCore.PostgreSQL
+// EF Core
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Identity
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
 // CORS
 builder.Services.AddCors(options =>
@@ -36,45 +39,68 @@ builder.Services.AddCors(options =>
     });
 });
 
-// --------------------
-// 2️⃣ Configure Kestrel để nhận tất cả IP + PORT Render
-// --------------------
+// JWT Authentication
+var key = builder.Configuration["Jwt:Key"];
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+    };
+});
+
+// Kestrel
 builder.WebHost.ConfigureKestrel(options =>
 {
-    var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-    options.ListenAnyIP(int.Parse(port));
+    options.ListenAnyIP(5000);
+    options.ListenLocalhost(5000);
 });
 
 var app = builder.Build();
 
-// --------------------
-// 3️⃣ Apply migrations + check DB connection
-// --------------------
+// -------------------- Apply migrations + seed admin --------------------
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
     try
     {
         if (!db.Database.CanConnect())
-        {
-            Console.WriteLine("❌ Cannot connect to database. Check your connection string!");
-        }
+            Console.WriteLine("❌ Cannot connect to database!");
         else
         {
-            Console.WriteLine("✅ Connected to database successfully!");
-            db.Database.Migrate(); // Apply migrations tự động
+            db.Database.Migrate();
+
+            if (!await roleManager.RoleExistsAsync("Admin"))
+                await roleManager.CreateAsync(new IdentityRole("Admin"));
+
+            var adminUser = await userManager.FindByNameAsync("admin");
+            if (adminUser == null)
+            {
+                adminUser = new IdentityUser { UserName = "admin", Email = "admin@example.com" };
+                await userManager.CreateAsync(adminUser, "Admin@123");
+                await userManager.AddToRoleAsync(adminUser, "Admin");
+            }
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ Database migration failed: {ex.Message}");
+        Console.WriteLine($"❌ Error: {ex.Message}");
     }
 }
 
-// --------------------
-// 4️⃣ Middleware
-// --------------------
+// -------------------- Middleware --------------------
 app.UseStaticFiles();
 app.UseCors("AllowAll");
 
@@ -84,10 +110,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
-// --------------------
-// 5️⃣ Run
-// --------------------
 app.Run();
