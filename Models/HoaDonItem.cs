@@ -1,32 +1,24 @@
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HRMApi.Models
 {
-    [Table("HoaDonItems")]
     public class HoaDonItem
     {
-        [Key]
         public int Id { get; set; }
 
-        // 🔹 Foreign key tới bảng HoaDon
-        [Required]
+        // 🔹 FK tới bảng HoaDon
         public int HoaDonId { get; set; }
 
-        // Tên hàng/sản phẩm
-        [Required]
+        // tên hàng/sản phẩm
         public string TenHang { get; set; } = string.Empty;
 
-        // Số lượng mua
-        [Required]
+        // số lượng mua
         public int SoLuong { get; set; }
 
-        // Đơn giá từng sản phẩm
-        [Required]
+        // đơn giá từng sản phẩm
         public int GiaTien { get; set; }
 
-        // Navigation tới hóa đơn
-        [ForeignKey("HoaDonId")]
+        // 🔹 Navigation tới hóa đơn
         public HoaDon? HoaDon { get; set; }
     }
 }

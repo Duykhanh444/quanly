@@ -1,9 +1,8 @@
-using HRMApi.Data;
-using HRMApi.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Google.Apis.Auth;
-using System.Security.Cryptography;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 
 namespace HRMApi.Controllers
@@ -12,122 +11,95 @@ namespace HRMApi.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly UserManager<IdentityUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(ApplicationDbContext context)
+        public AuthController(UserManager<IdentityUser> userManager,
+                              RoleManager<IdentityRole> roleManager,
+                              IConfiguration configuration)
         {
-            _context = context;
+            _userManager = userManager;
+            _roleManager = roleManager;
+            _configuration = configuration;
         }
 
-        // ========== REGISTER ==========
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterModel model)
         {
-            if (await _context.Users.AnyAsync(u => u.Email == model.Email))
-                return BadRequest(new { message = "Email đã tồn tại!" });
+            var userExists = await _userManager.FindByNameAsync(model.Username);
+            if (userExists != null) return BadRequest("User already exists!");
 
-            var user = new User
+            var user = new IdentityUser
             {
                 UserName = model.Username,
-                Email = model.Email,
-                PasswordHash = HashPassword(model.Password),
-                Role = "User"
+                Email = string.IsNullOrEmpty(model.Email) ? $"{model.Username}@example.com" : model.Email,
+                SecurityStamp = Guid.NewGuid().ToString()
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            var result = await _userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded) return BadRequest(result.Errors);
 
-            return Ok(new
-            {
-                message = "Đăng ký thành công",
-                user.Id,
-                user.Email,
-                user.UserName,
-                user.Role
-            });
+            // tạo role nếu chưa có
+            if (!await _roleManager.RoleExistsAsync("User"))
+                await _roleManager.CreateAsync(new IdentityRole("User"));
+
+            // gán role cho user
+            await _userManager.AddToRoleAsync(user, "User");
+
+            return Ok("User created successfully!");
         }
 
-        // ========== LOGIN ==========
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == model.Username);
-            if (user == null || user.PasswordHash != HashPassword(model.Password))
-                return Unauthorized(new { message = "Sai tài khoản hoặc mật khẩu" });
-
-            return Ok(new
+            var user = await _userManager.FindByNameAsync(model.Username);
+            if (user != null && await _userManager.CheckPasswordAsync(user, model.Password))
             {
-                message = "Đăng nhập thành công",
-                user.Id,
-                user.Email,
-                user.UserName,
-                user.Role
-            });
-        }
+                var userRoles = await _userManager.GetRolesAsync(user);
 
-        // ========== GOOGLE LOGIN ==========
-        [HttpPost("google-login")]
-        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginModel model)
-        {
-            try
-            {
-                var payload = await GoogleJsonWebSignature.ValidateAsync(model.IdToken);
-
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == payload.Email);
-                if (user == null)
+                var authClaims = new List<Claim>
                 {
-                    user = new User
-                    {
-                        UserName = payload.Email.Split('@')[0],
-                        Email = payload.Email,
-                        AvatarUrl = payload.Picture,
-                        Role = "User"
-                    };
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                };
 
-                    _context.Users.Add(user);
-                    await _context.SaveChangesAsync();
-                }
+                // thêm role claim
+                foreach (var userRole in userRoles)
+                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+
+                var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+
+                var token = new JwtSecurityToken(
+                    issuer: _configuration["Jwt:Issuer"],
+                    audience: _configuration["Jwt:Audience"],
+                    expires: DateTime.Now.AddHours(3),
+                    claims: authClaims,
+                    signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+                );
 
                 return Ok(new
                 {
-                    message = "Đăng nhập Google thành công",
-                    user.Id,
-                    user.Email,
-                    user.UserName,
-                    user.Role
+                    token = new JwtSecurityTokenHandler().WriteToken(token),
+                    expiration = token.ValidTo
                 });
             }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = "Google token không hợp lệ", error = ex.Message });
-            }
-        }
 
-        // ========== SUPPORT ==========
-        private string HashPassword(string password)
-        {
-            using var sha = SHA256.Create();
-            var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(bytes);
+            return Unauthorized();
         }
     }
 
-    // DTOs
     public class RegisterModel
     {
-        public string Username { get; set; } = "";
-        public string Email { get; set; } = "";
-        public string Password { get; set; } = "";
+        public string Username { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
     }
 
     public class LoginModel
     {
-        public string Username { get; set; } = "";
-        public string Password { get; set; } = "";
-    }
-
-    public class GoogleLoginModel
-    {
-        public string IdToken { get; set; } = "";
+        public string Username { get; set; }
+        public string Password { get; set; }
     }
 }

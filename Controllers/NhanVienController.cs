@@ -26,7 +26,7 @@ namespace HRMApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
             var list = await _context.NhanViens
                 .Include(n => n.WorkDays)
@@ -41,7 +41,7 @@ namespace HRMApi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
             var nv = await _context.NhanViens
                 .Include(n => n.WorkDays)
@@ -60,7 +60,7 @@ namespace HRMApi.Controllers
             [FromForm] decimal luongTheoGio,
             [FromForm] IFormFile? anhDaiDien)
         {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
             if (string.IsNullOrWhiteSpace(hoTen))
                 return BadRequest("Họ tên không được để trống");
@@ -78,7 +78,7 @@ namespace HRMApi.Controllers
                 CreatedBy = User.Identity?.Name ?? ""
             };
 
-            // Upload ảnh
+            // upload ảnh
             if (anhDaiDien != null)
             {
                 var fileName = Guid.NewGuid() + Path.GetExtension(anhDaiDien.FileName);
@@ -106,7 +106,7 @@ namespace HRMApi.Controllers
             [FromForm] decimal luongTheoGio,
             [FromForm] IFormFile? anhDaiDien)
         {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
             var nv = await _context.NhanViens.Include(n => n.WorkDays)
                 .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
@@ -136,7 +136,7 @@ namespace HRMApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
             var nv = await _context.NhanViens.Include(n => n.WorkDays)
                 .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
@@ -151,7 +151,7 @@ namespace HRMApi.Controllers
         [HttpPost("{id}/WorkDays")]
         public async Task<IActionResult> AddWorkDay(int id, [FromBody] WorkDayRequestDto dto)
         {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
             var nv = await _context.NhanViens.Include(n => n.WorkDays)
                 .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
@@ -175,7 +175,7 @@ namespace HRMApi.Controllers
         [HttpPut("{id}/WorkDays/{workDayId}")]
         public async Task<IActionResult> UpdateWorkDay(int id, int workDayId, [FromBody] WorkDayRequestDto dto)
         {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
             var nvCheck = await _context.NhanViens.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
             if (nvCheck == null) return NotFound();
@@ -195,7 +195,7 @@ namespace HRMApi.Controllers
         [HttpDelete("{id}/WorkDays/{workDayId}")]
         public async Task<IActionResult> DeleteWorkDay(int id, int workDayId)
         {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
             var nvCheck = await _context.NhanViens.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
             if (nvCheck == null) return NotFound();
@@ -210,18 +210,17 @@ namespace HRMApi.Controllers
             return Ok(MapToDto(nv));
         }
 
-        // ========== MAPPER ==========
         private NhanVienDto MapToDto(NhanVien nv)
         {
             return new NhanVienDto
             {
                 Id = nv.Id,
-                HoTen = nv.HoTen ?? "",
-                SoDienThoai = nv.SoDienThoai ?? "",
-                ChucVu = nv.ChucVu ?? "",
+                HoTen = nv.HoTen,
+                SoDienThoai = nv.SoDienThoai,
+                ChucVu = nv.ChucVu,
                 LuongTheoGio = (double)nv.LuongTheoGio,
                 AnhDaiDien = nv.AnhDaiDien,
-                WorkDays = nv.WorkDays.Select(w => new WorkDayDto
+                WorkDays = nv.WorkDays.Select(w => new WorkDayResponseDto
                 {
                     Id = w.Id,
                     Ngay = w.Ngay,
