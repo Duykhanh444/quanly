@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HRMApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1fcbe9f103ed010a0d181d89cd88563320ac3dca")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3f8e18ca168550c1dc43b03f0ed7d7680b1925aa")]
 [assembly: System.Reflection.AssemblyProductAttribute("HRMApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HRMApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
