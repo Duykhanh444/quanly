@@ -1,0 +1,74 @@
+// Controllers/QrController.cs
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+[ApiController]
+[Route("api/[controller]")]
+public class QrController : ControllerBase
+{
+    private readonly AppDbContext _context;
+    public QrController(AppDbContext context) => _context = context;
+
+    // 1) Generate token (admin)
+    [HttpPost("generate")]
+    // [Authorize(Roles="Admin")] // bật nếu cần kiểm soát ai được tạo QR
+    public async Task<IActionResult> Generate([FromQuery] string purpose = "kho_nhap", [FromQuery] int expireHours = 24)
+    {
+        var token = Guid.NewGuid().ToString("N");
+        var q = new QrToken {
+            Token = token,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddHours(expireHours),
+            Purpose = purpose,
+            CreatedBy = User?.Identity?.Name
+        };
+
+        _context.QrTokens.Add(q);
+        await _context.SaveChangesAsync();
+
+        // tạo url đầy đủ, chú ý HTTPS cấu hình production
+        var url = $"{Request.Scheme}://{Request.Host}/api/qr/use/{token}";
+
+        return Ok(new { token, url });
+    }
+
+    // 2) Use token (khi quét)
+    [HttpPost("use/{token}")]
+    public async Task<IActionResult> UseToken([FromRoute] string token)
+    {
+        var q = await _context.QrTokens.FirstOrDefaultAsync(x => x.Token == token);
+        if (q == null) return NotFound(new { message = "Token không tồn tại" });
+        if (q.IsUsed) return BadRequest(new { message = "Token đã được sử dụng" });
+        if (q.ExpiresAt.HasValue && q.ExpiresAt.Value < DateTime.UtcNow)
+            return BadRequest(new { message = "Token đã hết hạn" });
+
+        using var tran = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // Tạo kho hàng nhập mới
+            var kho = new KhoHang {
+                TenKho = $"Kho nhập tự động - {DateTime.Now:yyyyMMddHHmmss}",
+                GhiChu = $"Tạo tự động từ QR (purpose={q.Purpose})",
+                NgayNhap = DateTime.Now
+            };
+
+            _context.KhoHangs.Add(kho);
+
+            // đánh dấu token là đã dùng
+            q.IsUsed = true;
+
+            await _context.SaveChangesAsync();
+            await tran.CommitAsync();
+
+            return Ok(new {
+                message = "Tạo kho hàng nhập thành công",
+                kho = new { kho.Id, kho.TenKho, kho.NgayNhap }
+            });
+        }
+        catch (Exception ex)
+        {
+            await tran.RollbackAsync();
+            return StatusCode(500, new { message = "Lỗi server", detail = ex.Message });
+        }
+    }
+}

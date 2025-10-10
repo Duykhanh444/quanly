@@ -21,6 +21,7 @@ namespace HRMApi.Data
         public DbSet<KhoHang> KhoHang { get; set; }
         public DbSet<WorkDay> WorkDays { get; set; }
         public DbSet<TongHopDanhSach> TongHopDanhSaches { get; set; }
+        public DbSet<QrToken> QrTokens { get; set; }
 
         public DbSet<HoaDon> HoaDons { get; set; }
         public DbSet<HoaDonItem> HoaDonItems { get; set; }

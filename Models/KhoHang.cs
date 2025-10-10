@@ -21,11 +21,10 @@ namespace HRMApi.Models
         [Required]
         public string TrangThai { get; set; } = "Hoạt động"; // "Hoạt động" hoặc "Đã xuất"
 
-        // 🔹 Giá trị của kho (số tiền, trị giá hàng hóa)
         [Required]
         public decimal GiaTri { get; set; }
 
-        // 🔹 Liên kết với user hiện đang đăng nhập
-        public string UserId { get; set; } = string.Empty;
+        // ✅ Cho phép null nếu chưa có user đăng nhập
+        public string? UserId { get; set; }
     }
 }

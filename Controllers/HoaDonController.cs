@@ -131,5 +131,51 @@ namespace HRMApi.Controllers
 
             return NoContent();
         }
+        [HttpPost("tao-theo-ma/{maSanPham}")]
+public async Task<IActionResult> TaoHoaDonTheoMa(string maSanPham)
+{
+    try
+    {
+        // ✅ 1️⃣ Tìm sản phẩm trong kho theo mã
+        var sanPham = await _context.KhoHangs.FirstOrDefaultAsync(x => x.MaKho == maSanPham);
+        if (sanPham == null)
+        {
+            return NotFound(new { message = $"Không tìm thấy sản phẩm có mã {maSanPham}" });
+        }
+
+        // ✅ 2️⃣ Tạo hóa đơn mới
+        var hoaDon = new HoaDon
+        {
+            MaHoaDon = $"HD-{DateTime.Now:yyyyMMddHHmmss}",
+            NgayLap = DateTime.Now,
+            LoaiHoaDon = "Xuất kho",
+            PhuongThuc = "Tiền mặt",
+            TrangThai = "Chưa thanh toán",
+            TongTien = sanPham.GiaTri, // dùng giá trị sản phẩm làm tổng tiền
+            Items = new List<HoaDonChiTiet>()
+            {
+                new HoaDonChiTiet
+                {
+                    MaSanPham = sanPham.MaKho,
+                    TenSanPham = sanPham.TenKho,
+                    SoLuong = 1,
+                    DonGia = sanPham.GiaTri,
+                    ThanhTien = sanPham.GiaTri
+                }
+            }
+        };
+
+        // ✅ 3️⃣ Lưu hóa đơn
+        _context.HoaDons.Add(hoaDon);
+        await _context.SaveChangesAsync();
+
+        return Ok(hoaDon);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { message = "Lỗi khi tạo hóa đơn từ mã sản phẩm", error = ex.Message });
+    }
+}
+
     }
 }
