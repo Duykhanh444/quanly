@@ -12,7 +12,9 @@ namespace HRMApi.Models
         public string? LoaiHoaDon { get; set; }
         public DateTime NgayLap { get; set; }
         public string TrangThai { get; set; } = string.Empty;
-        public int TongTien { get; set; }
+
+        // ✅ ĐÃ SỬA TỪ "int" THÀNH "long"
+        public long TongTien { get; set; }
 
         // 🔹 Liên kết với user hiện đang đăng nhập
         public string UserId { get; set; } = string.Empty;
@@ -24,9 +26,11 @@ namespace HRMApi.Models
         public ICollection<HoaDonItem> Items { get; set; } = new List<HoaDonItem>();
 
         // 🔹 Tính tổng tiền theo Items
-        public int TinhTongTien()
+        // ✅ ĐÃ SỬA KIỂU TRẢ VỀ VÀ PHÉP TÍNH CHO AN TOÀN
+        public long TinhTongTien()
         {
-            return Items?.Sum(i => i.SoLuong * i.GiaTien) ?? 0;
+            // (long)i.SoLuong đảm bảo phép nhân giữa hai số lớn không bị tràn
+            return Items?.Sum(i => (long)i.SoLuong * i.GiaTien) ?? 0;
         }
     }
 }

@@ -16,7 +16,8 @@ namespace HRMApi.Models
         public int SoLuong { get; set; }
 
         // đơn giá từng sản phẩm
-        public int GiaTien { get; set; }
+        // ✅ ĐÃ SỬA TỪ "int" THÀNH "long"
+        public long GiaTien { get; set; }
 
         // 🔹 Navigation tới hóa đơn
         public HoaDon? HoaDon { get; set; }
