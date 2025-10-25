@@ -55,7 +55,7 @@ namespace HRMApi.Controllers
             return Ok("User created successfully!");
         }
 
-        // ====================== ĐĂNG NHẬP ======================
+        // ====================== ĐĂNG NHẬP (ĐÃ SỬA) ======================
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
@@ -66,8 +66,9 @@ namespace HRMApi.Controllers
 
                 var authClaims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(ClaimTypes.Name, user.UserName), // Claim này chứa Username
                     new Claim(ClaimTypes.NameIdentifier, user.Id),
+                    new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""), // ✨ THÊM CLAIM EMAIL
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                 };
 
@@ -80,20 +81,50 @@ namespace HRMApi.Controllers
                 var token = new JwtSecurityToken(
                     issuer: _configuration["Jwt:Issuer"],
                     audience: _configuration["Jwt:Audience"],
-                    expires: DateTime.Now.AddHours(3),
+                    expires: DateTime.Now.AddHours(3), // Có thể tăng thời gian hết hạn
                     claims: authClaims,
                     signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
                 );
 
+                // ✨ TRẢ VỀ THÊM USERNAME VÀ EMAIL ✨
                 return Ok(new
                 {
                     token = new JwtSecurityTokenHandler().WriteToken(token),
-                    expiration = token.ValidTo
+                    expiration = token.ValidTo,
+                    // ✨ Thêm thông tin người dùng vào response ✨
+                    user = new
+                    {
+                        username = user.UserName, // Key là 'username'
+                        email = user.Email       // Key là 'email'
+                    }
                 });
             }
 
             return Unauthorized("Sai tên đăng nhập hoặc mật khẩu");
         }
+
+        // ====================== LẤY THÔNG TIN CÁ NHÂN (HÀM MỚI) ======================
+        [Authorize] // Yêu cầu phải có token hợp lệ
+        [HttpGet("profile")]
+        public async Task<IActionResult> GetProfile()
+        {
+            // Lấy user hiện tại từ token (dựa vào ClaimTypes.NameIdentifier hoặc ClaimTypes.Name)
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return Unauthorized(new { message = "Không tìm thấy người dùng hoặc token không hợp lệ" });
+            }
+
+            // Trả về thông tin cần thiết
+            return Ok(new
+            {
+                username = user.UserName, // Key là 'username'
+                email = user.Email       // Key là 'email'
+                // Bạn có thể trả về thêm thông tin khác nếu cần
+            });
+        }
+
 
         // ====================== ĐỔI MẬT KHẨU ======================
         [Authorize]

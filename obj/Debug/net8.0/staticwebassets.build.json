@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "SrZCWFB74ZsNMQ4PwrWI+NArOogCovaQQQ2qiua7c6U=",
+  "Hash": "0XE0WQJfUho/sNkixcEEmEr6eRIEXRaBi308w8k68fM=",
   "Source": "HRMApi",
   "BasePath": "_content/HRMApi",
   "Mode": "Default",
@@ -511,6 +511,25 @@
       "OriginalItemSpec": "wwwroot\\uploads\\5ae0bb4a-25d7-489a-b2bd-9635ea319e09.png"
     },
     {
+      "Identity": "E:\\HRMApi\\wwwroot\\uploads\\5c033b48-0594-4bda-9f41-682ad58821ad.jpg",
+      "SourceId": "HRMApi",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\HRMApi\\wwwroot\\",
+      "BasePath": "_content/HRMApi",
+      "RelativePath": "uploads/5c033b48-0594-4bda-9f41-682ad58821ad.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\5c033b48-0594-4bda-9f41-682ad58821ad.jpg"
+    },
+    {
       "Identity": "E:\\HRMApi\\wwwroot\\uploads\\5c3d1424-de6b-4900-828e-c1494d15c5a0.jpg",
       "SourceId": "HRMApi",
       "SourceType": "Discovered",
@@ -720,6 +739,25 @@
       "OriginalItemSpec": "wwwroot\\uploads\\950b6bdc-7d05-4d8f-9ba2-b8c9dec389b4.jpg"
     },
     {
+      "Identity": "E:\\HRMApi\\wwwroot\\uploads\\95a841b9-d75f-4306-b76d-cddd975f6e93.jpg",
+      "SourceId": "HRMApi",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\HRMApi\\wwwroot\\",
+      "BasePath": "_content/HRMApi",
+      "RelativePath": "uploads/95a841b9-d75f-4306-b76d-cddd975f6e93.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\95a841b9-d75f-4306-b76d-cddd975f6e93.jpg"
+    },
+    {
       "Identity": "E:\\HRMApi\\wwwroot\\uploads\\9b75351f-a315-4912-a8db-b998b1eb16d8.jpg",
       "SourceId": "HRMApi",
       "SourceType": "Discovered",
@@ -889,6 +927,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\uploads\\c3b8207b-ebd5-4918-8480-78adfedefbd8.jpg"
+    },
+    {
+      "Identity": "E:\\HRMApi\\wwwroot\\uploads\\c63e5c9e-fc1c-49e4-981e-b9f51748f0d8.jpg",
+      "SourceId": "HRMApi",
+      "SourceType": "Discovered",
+      "ContentRoot": "E:\\HRMApi\\wwwroot\\",
+      "BasePath": "_content/HRMApi",
+      "RelativePath": "uploads/c63e5c9e-fc1c-49e4-981e-b9f51748f0d8.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\c63e5c9e-fc1c-49e4-981e-b9f51748f0d8.jpg"
     },
     {
       "Identity": "E:\\HRMApi\\wwwroot\\uploads\\ddc0edd3-1838-4392-a807-92a2cd99dbf3.jpg",
